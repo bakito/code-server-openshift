@@ -1,0 +1,64 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: coder
+  name: coder
+spec:
+  replicas: 1
+  selector:
+    app: coder
+    deploymentconfig: coder
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftWebConsole
+      creationTimestamp: null
+      labels:
+        app: coder
+        deploymentconfig: coder
+    spec:
+      containers:
+      - image: chinodesuuu/coder:openshift
+        imagePullPolicy: Always
+        name: coder
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /home/coder/certs
+          name: coder-1
+        - mountPath: /home/coder/projects
+          name: coder-2
+        - mountPath: /home/coder/.local
+          name: local
+        - mountPath: /home/coder/.cache
+          name: cache
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: coder-1
+      - emptyDir: {}
+        name: coder-2
+      - name: local
+        persistentVolumeClaim:
+          claimName: local
+      - name: cache
+        persistentVolumeClaim:
+          claimName: cache
+  triggers:
+  - type: ConfigChange
